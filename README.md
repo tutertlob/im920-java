@@ -5,6 +5,14 @@ A java package for communicating among IM920 wireless modules from Interplan.
 
 IM920でデータ通信するため本ライブラリでは４つのパケットタイプを定義し、IM920のフレームに乗せて送信する。パケットタイプの詳細については[Arduino用ライブラリ](https://github.com/tutertlob/im920-arduino)を参照。
 
+## Installation
+im920-javaのソースディレクトで
+```
+mvn install
+```
+
+最後にrxtxのnativeライブラリをインストールする。詳細はDependenciesを参照。
+
 ## Configuring IM920 wireless module
 IM920通信モジュールを設定する。Interplanから出ているUSB interface boardを使用し、PCと接続して行う。
 以下の項目を設定する。設定コマンドはInterplanのマニュアルを参照。送受信側双方同じ設定にする。
