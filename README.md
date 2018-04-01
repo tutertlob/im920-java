@@ -43,11 +43,11 @@ im920.sendNotice("Hello world!!");
 ````
 sudo apt-get install librxtx-java
 ````
-ライブラリは`/usr/lib/jni`にインストールされる。インストールバージョンは2.2pre1。
+ライブラリは`/usr/lib/jni`にインストールされる。インストールバージョンは2.2pre2。
 
 `RXTX`を使用する際は、`java.library.path`にインストールディレクトリを指定する。
 ```
-java -Djava.library.path=/usr/lib/jni -jar ...
+sudo java -Djava.library.path=/usr/lib/jni -jar ...
 ```
 ただ[こちら](http://rxtx.qbang.org/wiki/index.php/Download)に'TODO: The 2.2pre2 bins contain the 2.2pre1 jar file and the 2.2pre2 native lib which causes a mismatch warning'
 とあるようにmavenレポジトリのjarファイル（バージョン2.2pre1)とミスマッチが発生し、下記の通りWARNINGが発生する。
