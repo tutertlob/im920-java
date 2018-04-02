@@ -1,23 +1,19 @@
 package com.github.tutertlob.im920wireless.packet;
 
-import java.util.logging.Logger;
-import java.util.logging.Level;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-
-import java.lang.IllegalArgumentException;
-import java.lang.NullPointerException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class NoticePacket extends Im920Packet {
 
 	private static final Logger logger = Logger.getLogger(NoticePacket.class.getName());
 
 	private static final int NOTICE_I = PACKET_PAYLOAD_I;
-	
+
 	public static final int NOTICE_MAX_LENGTH = PAYLOAD_MAX_LENGTH;
-	
-	private String payload; 
+
+	private String payload;
 
 	public NoticePacket() {
 		super(Type.NOTICE);
@@ -52,26 +48,26 @@ public class NoticePacket extends Im920Packet {
 			logger.log(Level.WARNING, msg);
 			throw new IllegalArgumentException(msg);
 		}
-		
+
 		payload = notice;
-		
+
 		body = null;
 	}
-	
+
 	@Override
 	public int getPayloadLength() {
 		return payload.length();
 	}
-	
+
 	@Override
 	public byte[] getPayload() {
 		return payload.getBytes(StandardCharsets.US_ASCII);
 	}
-	
+
 	public String toString() {
 		String hdr = super.toString();
 		String body = String.format("\nNotice: %s", getNotice());
-		
+
 		return hdr + body;
 	}
 }

@@ -1,44 +1,31 @@
 package com.github.tutertlob.im920wireless.util;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.xml.bind.DatatypeConverter;
 
-import com.github.tutertlob.im920wireless.packet.Im920Packet.Type;
-
-import java.util.logging.Level;
-
 import gnu.io.CommPort;
 import gnu.io.CommPortIdentifier;
-import gnu.io.SerialPort;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import gnu.io.PortInUseException;
-import gnu.io.UnsupportedCommOperationException;
 import gnu.io.NoSuchPortException;
-
-import java.lang.Thread;
-import java.util.concurrent.Semaphore;
-import java.nio.ByteBuffer;
-import java.lang.String;
-import java.lang.StringBuilder;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ArrayBlockingQueue;
-
-import java.lang.NullPointerException;
-import java.lang.InterruptedException;
-import java.lang.UnsupportedOperationException;
+import gnu.io.PortInUseException;
+import gnu.io.SerialPort;
+import gnu.io.UnsupportedCommOperationException;
 
 public final class Im920Interface {
 
@@ -51,21 +38,21 @@ public final class Im920Interface {
 		private final int baud;
 
 		private static final Map<Integer, BaudRate> m = new HashMap<>();
-		
+
 		BaudRate(int baud) {
 			this.baud = baud;
 		}
 
 		static {
-			for (BaudRate b: BaudRate.values()) {
+			for (BaudRate b : BaudRate.values()) {
 				m.put(Integer.valueOf(b.baud), b);
 			}
 		}
-		
+
 		public int baud() {
 			return baud;
 		}
-		
+
 		public static BaudRate valueOf(Integer baud) {
 			BaudRate b = m.get(baud);
 			if (b == null) {
@@ -172,24 +159,9 @@ public final class Im920Interface {
 	private boolean isAvailable() throws IOException {
 		return in.available() > 0 ? true : false;
 	}
-	
+
 	private int readSerial(byte[] buf) throws IOException {
 		return in.read(buf);
-	}
-
-	private int readSerialUntil(char terminator, byte[] buf) throws IOException {
-		int i = 0;
-
-		while (i < buf.length) {
-			byte c = (byte) in.read();
-			if ((char) c == terminator)
-				break;
-			if (c != -1) {
-				buf[i++] = c;
-			}
-		}
-
-		return i;
 	}
 
 	private void writeSerial(String cmd) throws IOException {
@@ -211,13 +183,14 @@ public final class Im920Interface {
 		commandQueue.put(ticket);
 		return ticket.checkout();
 	}
-	
+
 	private void checkinCommandWithoutRes(String cmd) {
 		Ticket ticket = Ticket.checkin(cmd, false);
 		try {
 			commandQueue.put(ticket);
 		} catch (InterruptedException e) {
-			logger.log(Level.WARNING, String.format("The commandQueue must be full (%d/%d), but it is not expected.", commandQueue.size(), commandQueue.remainingCapacity()), e);
+			logger.log(Level.WARNING, String.format("The commandQueue must be full (%d/%d), but it is not expected.",
+					commandQueue.size(), commandQueue.remainingCapacity()), e);
 		}
 	}
 
@@ -249,7 +222,7 @@ public final class Im920Interface {
 	private ByteBuffer[] normalizeFrame(StringBuilder rawFrame) {
 		try {
 			StringBuilder buf = new StringBuilder();
-			
+
 			for (int begin = 0, end = rawFrame.indexOf(",");; end = rawFrame.indexOf(",", begin)) {
 				if (end > 0) {
 					buf.append(rawFrame.substring(begin, end));
@@ -259,11 +232,11 @@ public final class Im920Interface {
 					break;
 				}
 			}
-			
+
 			String[] frame = buf.toString().split(":");
 			byte[] header = DatatypeConverter.parseHexBinary(frame[0]);
 			byte[] body = DatatypeConverter.parseHexBinary(frame[1]);
-			
+
 			return new ByteBuffer[] { ByteBuffer.wrap(header), ByteBuffer.wrap(body) };
 		} catch (IndexOutOfBoundsException e) {
 			logger.log(Level.WARNING, "Received frame is collapsed.", e);
@@ -276,7 +249,7 @@ public final class Im920Interface {
 
 		if (frame.length() < 11)
 			return false;
-		
+
 		return frame.matches("^\\p{XDigit}{2},\\p{XDigit}{4},\\p{XDigit}{2}:(\\p{XDigit}{2},){0,}+\\p{XDigit}{2}$");
 	}
 
@@ -316,7 +289,7 @@ public final class Im920Interface {
 		} catch (InterruptedException e) {
 			logger.log(Level.WARNING, "InterruptedException happened.", e);
 		}
-		
+
 		if (response.startsWith("NG")) {
 			logger.info("IM920 command 'RWTM' failed.");
 			return 0;
@@ -327,7 +300,7 @@ public final class Im920Interface {
 	public boolean setActiveDuration(int activeTime) {
 		if (activeTime < 0 || activeTime > 0xFFFF)
 			throw new IllegalArgumentException("The specified active duration time is invalid.");
-		
+
 		String swtm = String.format("SWTM%04X\r\n", activeTime);
 		return execIm920CmdAndMatches(swtm, "OK");
 	}
@@ -350,7 +323,7 @@ public final class Im920Interface {
 	public boolean setSleepDuration(int sleepTime) {
 		if (sleepTime < 0 || sleepTime > 0xFFFF)
 			throw new IllegalArgumentException("The specified sleep duration time is invalid.");
-		
+
 		String sstm = String.format("SSTM%04X\r\n", sleepTime);
 		return execIm920CmdAndMatches(sstm, "OK");
 	}
@@ -366,26 +339,27 @@ public final class Im920Interface {
 		String cmd = new StringBuilder(command).append("\r\n").toString();
 		return checkinCommand(cmd);
 	}
-	
+
 	private static class Ticket {
 		private static final Logger logger = Logger.getLogger(Ticket.class.getName());
 
-		private static List<Ticket> tickets = Collections.synchronizedList(new ArrayList<>(Arrays.asList(new Ticket(), new Ticket(), new Ticket(), new Ticket(), new Ticket())));
+		private static List<Ticket> tickets = Collections.synchronizedList(
+				new ArrayList<>(Arrays.asList(new Ticket(), new Ticket(), new Ticket(), new Ticket(), new Ticket())));
 
 		String cmd = "";
 
 		BlockingQueue<String[]> responses = new ArrayBlockingQueue<>(1);
 
 		boolean sync = true;
-		
+
 		private Ticket() {
 		}
-		
+
 		public static Ticket checkin(String cmd, boolean sync) {
 			if (cmd == null) {
 				throw new NullPointerException("The string argument cmd is null");
 			}
-			
+
 			try {
 				Ticket ticket = tickets.remove(0);
 				ticket.cmd = cmd;
@@ -394,9 +368,9 @@ public final class Im920Interface {
 				return ticket;
 			} catch (IndexOutOfBoundsException e) {
 				logger.log(Level.INFO, "Creating new tickets.");
-				
+
 				tickets.addAll(Arrays.asList(new Ticket(), new Ticket(), new Ticket(), new Ticket()));
-				
+
 				Ticket ticket = new Ticket();
 				ticket.cmd = cmd;
 				ticket.sync = sync;
@@ -462,7 +436,7 @@ public final class Im920Interface {
 					} catch (IOException e) {
 						logger.log(Level.WARNING, "IOException happened when reading bytes from the serial.", e);
 					}
-					
+
 					boolean prev = false;
 					for (String s : new String(buf, 0, readLen, StandardCharsets.US_ASCII).split("(\r\n*)|\n", -2)) {
 						if (!s.isEmpty()) {
@@ -472,7 +446,7 @@ public final class Im920Interface {
 								} else if (frame.length() > 2) {
 									responses.add(frame.toString());
 								} else {
-									im920Interface.notifyCmdResponses(new String[]{frame.toString()});
+									im920Interface.notifyCmdResponses(new String[] { frame.toString() });
 								}
 								frame = new StringBuilder();
 							}
@@ -485,7 +459,7 @@ public final class Im920Interface {
 								} else if (frame.length() > 2) {
 									responses.add(frame.toString());
 								} else {
-									im920Interface.notifyCmdResponses(new String[]{frame.toString()});
+									im920Interface.notifyCmdResponses(new String[] { frame.toString() });
 								}
 								frame = new StringBuilder();
 							}
@@ -493,14 +467,16 @@ public final class Im920Interface {
 					}
 				}
 			} catch (InterruptedException e) {
-				logger.log(Level.INFO, "SerialReader thread is going to exit gentely since an interface close request is received.", e);
+				logger.log(Level.INFO,
+						"SerialReader thread is going to exit gentely since an interface close request is received.",
+						e);
 			}
 		}
 	}
 
 	private static class SerialWriter implements Runnable {
 		private static final Logger logger = Logger.getLogger(SerialWriter.class.getName());
-		
+
 		Im920Interface im920Interface;
 
 		public SerialWriter(Im920Interface im920Interface) {
@@ -528,7 +504,8 @@ public final class Im920Interface {
 				}
 			} catch (InterruptedException e) {
 				logger.log(Level.INFO,
-						"SerialWriter thread is going to exit gentely since an interface close request is received.", e);
+						"SerialWriter thread is going to exit gentely since an interface close request is received.",
+						e);
 			}
 		}
 	}

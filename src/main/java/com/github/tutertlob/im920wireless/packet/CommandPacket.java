@@ -1,29 +1,24 @@
 package com.github.tutertlob.im920wireless.packet;
 
-import java.util.logging.Logger;
-import java.util.logging.Level;
-
-import java.lang.String;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-
-import java.lang.IllegalArgumentException;
-import java.lang.NullPointerException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class CommandPacket extends Im920Packet {
 
 	private static final Logger logger = Logger.getLogger(CommandPacket.class.getName());
 
 	private static final int COMMAND_I = PACKET_PAYLOAD_I;
-	
+
 	private static final int COMMAND_SIZE = 1;
 
 	public static final int PARAM_MAX_LENGTH = PAYLOAD_MAX_LENGTH - COMMAND_SIZE;
-	
+
 	private byte cmd = 0;
-	
+
 	private String param;
-	
+
 	private byte[] payload = null;
 
 	public CommandPacket() {
@@ -31,7 +26,7 @@ public class CommandPacket extends Im920Packet {
 		param = "";
 	}
 
-	public CommandPacket(ByteBuffer body) {		
+	public CommandPacket(ByteBuffer body) {
 		super(Type.COMMAND, body);
 		body.position(COMMAND_I);
 		setCommand(body.get());
@@ -71,18 +66,18 @@ public class CommandPacket extends Im920Packet {
 			logger.log(Level.WARNING, msg);
 			throw new IllegalArgumentException(msg);
 		}
-		
+
 		this.param = param;
-		
+
 		payload = null;
 		body = null;
 	}
-	
+
 	@Override
 	public int getPayloadLength() {
 		return COMMAND_SIZE + param.length();
 	}
-	
+
 	@Override
 	public byte[] getPayload() {
 		if (payload == null) {
@@ -90,18 +85,18 @@ public class CommandPacket extends Im920Packet {
 			buf.put(cmd);
 			buf.put(param.getBytes(StandardCharsets.US_ASCII));
 			payload = buf.array();
-			
+
 			return payload;
 		} else {
 			return payload;
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		String hdr = super.toString();
 		String body = String.format("\nCommand:0x%02X, Param: %s", getCommand(), getCommandParam());
-		
+
 		return hdr + body;
 	}
 }
