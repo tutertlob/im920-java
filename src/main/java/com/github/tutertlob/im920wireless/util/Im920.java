@@ -1,15 +1,14 @@
 package com.github.tutertlob.im920wireless.util;
 
-import com.github.tutertlob.im920wireless.packet.*;
-
-import java.util.logging.Logger;
-import java.util.logging.Level;
-
-import java.lang.String;
 import java.nio.ByteBuffer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import java.lang.NullPointerException;
-import java.lang.InterruptedException;
+import com.github.tutertlob.im920wireless.packet.AckPacket;
+import com.github.tutertlob.im920wireless.packet.CommandPacket;
+import com.github.tutertlob.im920wireless.packet.DataPacket;
+import com.github.tutertlob.im920wireless.packet.Im920Packet;
+import com.github.tutertlob.im920wireless.packet.NoticePacket;
 
 public final class Im920 {
 
@@ -18,22 +17,22 @@ public final class Im920 {
 	private Im920Interface im920Interface;
 
 	public static final byte IM920_MODULE_COMMAND = 1;
-	
+
 	private byte sequence = 0;
-	
+
 	public Im920(Im920Interface im920interface) {
 		this.im920Interface = im920interface;
 	}
-	
+
 	public Im920Packet readPacket() throws InterruptedException {
 		ByteBuffer[] frame = this.im920Interface.takeReceivedFrame();
 		Im920Packet packet = Im920Packet.frameOf(frame);
 		return packet;
 	}
-	
+
 	public void send(Im920Packet packet) {
 		packet.setSeqNum(getNextFrameID());
-		
+
 		im920Interface.sendDataAsync(packet.getPacketBytes());
 	}
 
@@ -43,14 +42,14 @@ public final class Im920 {
 			logger.log(Level.WARNING, msg);
 			throw new NullPointerException(msg);
 		}
-		
+
 		ByteBuffer buf;
 		for (buf = ByteBuffer.wrap(data); buf.remaining() > DataPacket.DATA_MAX_LENGTH;) {
 			byte[] chopped = new byte[DataPacket.DATA_MAX_LENGTH];
 			buf.get(chopped, 0, chopped.length);
 			DataPacket packet = new DataPacket(chopped);
 			packet.setFragment(true);
-			
+
 			send(packet);
 		}
 		byte[] chopped = new byte[buf.remaining()];
@@ -82,7 +81,7 @@ public final class Im920 {
 	}
 
 	private synchronized byte getNextFrameID() {
-		return (byte)sequence++;
+		return (byte) sequence++;
 	}
 
 }

@@ -1,13 +1,10 @@
 package com.github.tutertlob.im920wireless.packet;
 
-import java.util.logging.Logger;
-import java.util.logging.Level;
-
 import java.nio.ByteBuffer;
-import javax.xml.bind.DatatypeConverter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import java.lang.IllegalArgumentException;
-import java.lang.NullPointerException;
+import javax.xml.bind.DatatypeConverter;
 
 public class DataPacket extends Im920Packet {
 
@@ -16,7 +13,7 @@ public class DataPacket extends Im920Packet {
 	private static final int DATA_I = PACKET_PAYLOAD_I;
 
 	public static final int DATA_MAX_LENGTH = PAYLOAD_MAX_LENGTH;
-	
+
 	private byte[] data;
 
 	public DataPacket() {
@@ -51,27 +48,27 @@ public class DataPacket extends Im920Packet {
 			logger.log(Level.WARNING, msg);
 			throw new IllegalArgumentException(msg);
 		}
-		
+
 		this.data = data;
-		
+
 		body = null;
 	}
-	
+
 	@Override
 	public int getPayloadLength() {
 		return data.length;
 	}
-	
+
 	@Override
 	public byte[] getPayload() {
 		return getData();
 	}
-		
+
 	@Override
 	public String toString() {
 		String hdr = super.toString();
 		String body = String.format("\nData: %s", DatatypeConverter.printHexBinary(getData()));
-		
+
 		return hdr + body;
 	}
 }
